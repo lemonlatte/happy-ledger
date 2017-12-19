@@ -3,9 +3,11 @@ var VueRouter = require('vue-router')
 Vue.use(VueRouter)
 
 var Main = require('./app/main.vue')
+var History = require('./app/history.vue')
 
 var routes = [
-  {path: '/', component: Main}
+  {path: '/', component: History},
+  {path: '*', component: History}
 ]
 
 var router = new VueRouter({routes})
