@@ -68,9 +68,8 @@
 
   export default {
 
-    mounted() {
-      this.getBaseCoinPrice()
-      this.priceTask = setInterval(this.getBaseCoinPrice, 5000)
+    props: {
+      basePrices: Object
     },
 
     destroyed() {
@@ -84,15 +83,6 @@
     },
 
     methods: {
-      getBaseCoinPrice() {
-        axios.get("https://happy-ledger.lemonlatte.tw/v1/price")
-          .then((response) => {
-            this.basePrices = response.data
-          })
-          .catch((error) => {
-            console.log(error)
-          })
-      },
 
       newRecord() {
         let r = {
@@ -119,11 +109,6 @@
 
     data() {
       return {
-        basePrices: {
-          "btc": 0,
-          "eth": 0
-        },
-
         priceTask: null,
         baseCoin: "usd",
         toCoin: "btc",
