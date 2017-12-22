@@ -104,10 +104,11 @@ func (e *MarketCapCrawler) Run() {
 				time.Sleep(5 * time.Second)
 				continue
 			}
-			defer resp.Body.Close()
 			var buf bytes.Buffer
 			prices := []map[string]string{}
 			_, _ = io.Copy(&buf, resp.Body)
+			resp.Body.Close()
+
 			d := json.NewDecoder(&buf)
 			err = d.Decode(&prices)
 			if err != nil {
