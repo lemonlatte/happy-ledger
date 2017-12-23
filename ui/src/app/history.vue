@@ -79,7 +79,7 @@
   export default {
 
     props: {
-      user: Object,
+      uid: String,
       basePrices: Object
     },
 
@@ -97,11 +97,11 @@
     },
 
     methods: {
-      buy () {
+      buy() {
         this.newRecord(1)
       },
 
-      sell(){
+      sell() {
         this.newRecord(-1)
       },
 
@@ -141,7 +141,7 @@
         }
 
         try {
-          let ref = await db.collection("ledger").doc(this.user.uid).collection("history").add(r)
+          let ref = await db.collection("ledger").doc(this.uid).collection("history").add(r)
         } catch (error) {
           console.error("Error adding document: ", error);
         }
@@ -152,10 +152,22 @@
 
       async remove(id) {
         try {
-          await db.collection("ledger").doc(this.user.uid).collection("history").doc(id).delete()
+          await db.collection("ledger").doc(this.uid).collection("history").doc(id).delete()
         } catch (error) {
           console.log(error)
         }
+      },
+
+      loadData(uid){
+        db.collection("ledger").doc(uid).collection("history").orderBy("timestamp", "desc")
+            .onSnapshot(snapshot => {
+              let records = snapshot.docs.map(doc => {
+                let d = doc.data()
+                d.id = doc.id
+                return d
+              })
+              this.records = records
+            });
       }
     },
 
@@ -165,18 +177,18 @@
       }
     },
 
+    watch: {
+      uid(newVal, oldVal) {
+        if (newVal) {
+          this.loadData(newVal)
+        }
+      }
+    },
+
     mounted() {
-      firebase.auth().onAuthStateChanged((user) => {
-        db.collection("ledger").doc(user.uid).collection("history").orderBy("timestamp", "desc")
-          .onSnapshot(snapshot => {
-            let records = snapshot.docs.map(doc => {
-              let d = doc.data()
-              d.id = doc.id
-              return d
-            })
-            this.records = records
-          });
-      })
+      if (this.uid) {
+        this.loadData(this.uid)
+      }
     },
 
     data() {
