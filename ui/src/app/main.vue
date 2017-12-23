@@ -37,6 +37,7 @@
         axios.get("https://happy-ledger.lemonlatte.tw/v1/price")
           .then((response) => {
             this.basePrices = response.data
+            this.basePrices.usd = 1
           })
           .catch((error) => {
             console.log(error)
