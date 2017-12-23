@@ -18,9 +18,7 @@ gulp.task("dev", ["clean", "html"], function () {
   const b = browserify('./src/main.js')
     .plugin(hmr)
     .transform(vueify,{
-      sass: {
-        indentedSyntax: true
-      }
+      sass: {}
     })
     .transform(babelify,
                {presets: ["es2015", "stage-2"], plugins: ["transform-runtime"]})
