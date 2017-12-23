@@ -10,6 +10,7 @@
 </template>
 
 <script>
+  import firebase from "firebase"
   import axios from "axios"
 
   const NavBar = require('./navbar.vue')
@@ -22,6 +23,13 @@
     created() {
       this.getBaseCoinPrice()
       this.priceTask = setInterval(this.getBaseCoinPrice, 5000)
+      firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+          this.uid = user.uid
+        } else {
+          this.uid = null
+        }
+      });
     },
 
     methods: {
@@ -42,6 +50,7 @@
 
     data() {
       return {
+        uid: null,
         basePrices: {},
         nodeInfo: {}
       }
