@@ -3,15 +3,22 @@
 </style>
 
 <template>
-  <div>
-    <router-view v-on:error="this.handleError" :basePrices="basePrices"></router-view>
+  <div id="main">
+    <NavBar ></NavBar>
+    <router-view v-on:error="this.handleError" :uid="uid" :basePrices="basePrices"></router-view>
   </div>
 </template>
 
 <script>
   import axios from "axios"
 
+  const NavBar = require('./navbar.vue')
+
   export default {
+    components: {
+      NavBar: NavBar,
+    },
+
     created() {
       this.getBaseCoinPrice()
       this.priceTask = setInterval(this.getBaseCoinPrice, 5000)
