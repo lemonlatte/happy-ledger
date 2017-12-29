@@ -4,7 +4,7 @@
 
 <template>
   <div id="main">
-    <NavBar ></NavBar>
+    <NavBar :user="user"></NavBar>
     <router-view v-on:error="this.handleError" :uid="uid" :basePrices="basePrices"></router-view>
   </div>
 </template>
@@ -26,8 +26,10 @@
       firebase.auth().onAuthStateChanged((user) => {
         if (user) {
           this.uid = user.uid
+          this.user = user
         } else {
           this.uid = null
+          this.user = null
         }
       });
     },
@@ -52,6 +54,7 @@
     data() {
       return {
         uid: null,
+        user: null,
         basePrices: {},
         nodeInfo: {}
       }
