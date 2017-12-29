@@ -6,32 +6,25 @@
   <div>
     <table border="1">
       <tr>
-        <td rowspan="2">交易時間</td>
-        <td colspan="2">購買數量</td>
-        <td colspan="3">交易貨幣</td>
-        <td colspan="2">交易當下現值(USD)</td>
-        <td rowspan="2">刪除</td>
+        <td>Time</td>
+        <td>Trade Pair</td>
+        <td>Price</td>
+        <td>Amount</td>
+        <td>Trade Price(Base Coin)</td>
+        <td>Trade Value(USD)</td>
+        <td></td>
       </tr>
-      <tr>
-        <td>幣別</td>
-        <td>數量</td>
-        <td>幣別</td>
-        <td>單價</td>
-        <td>數量</td>
-        <td>單價</td>
-        <td>總值</td>
-      </tr>
-      <!-- <template ></template> -->
       <tr v-for="r in records" v-bind:key="r.id">
         <td>{{ r.timestamp | moment }}</td>
-        <td>{{ r.toCoin }}</td>
+        <td>{{ r.toCoin }}/{{ r.baseCoin }}</td>
+        <td>{{ r.baseCoinAmount / r.toAmount}} {{ r.baseCoin }}</td>
         <td>{{ r.toAmount }}</td>
-        <td>{{ r.baseCoin }}</td>
-        <td>{{ r.unitPrice }}</td>
-        <td>{{ r.baseCoinAmount }}</td>
-        <td>{{ r.baseCoinCost.usd / r.toAmount }}</td>
+        <td>{{ r.baseCoinAmount }} {{ r.baseCoin }}</td>
         <td>{{ r.baseCoinCost.usd }}</td>
-        <td @click="() => {remove(r.id)}">X</td>
+        <td>
+          <button @click="() => {remove(r.id)}">Edit</button>
+          <button @click="() => {remove(r.id)}">Delete</button>
+        </td>
       </tr>
     </table>
 
