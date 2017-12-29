@@ -4,40 +4,29 @@
 
 <template>
   <div>
-    <table border="1" v-if="basePrices.btc">
-      <tr>
-        <td colspan="2">持有貨幣</td>
-        <td colspan="2">持有成本</td>
-        <td colspan="2">現今估值</td>
-      </tr>
+    <table border="1" width="100%" v-if="basePrices.btc">
       <tr>
         <td>幣別</td>
         <td>數量</td>
-        <td>幣別</td>
-        <td>數量</td>
-        <td>幣別</td>
-        <td>總值</td>
+        <td>持有成本</td>
+        <td>現今估值</td>
+        <td></td>
       </tr>
       <template v-for="(value, key) in balance">
         <tr>
-          <td rowspan="3">{{ key }}</td>
-          <td rowspan="3">{{ value.amount }}</td>
-          <td>BTC</td>
-          <td>{{ value.btcCost }}</td>
-          <td>BTC</td>
-          <td>{{ value.btcCost * basePrices.btc }}</td>
-        </tr>
-        <tr>
-          <td>ETH</td>
-          <td>{{ value.ethCost }}</td>
-          <td>ETH</td>
-          <td>{{ value.ethCost * basePrices.eth }}</td>
-        </tr>
-        <tr>
-          <td>USD</td>
-          <td>{{ value.usdCost }}</td>
-          <td>USD</td>
-          <td>{{ value.usdCost }}</td>
+          <td>{{ key }}</td>
+          <td>{{ value.amount }}</td>
+          <td>
+            <p>{{ value.btcCost }} BTC</p>
+            <p>{{ value.ethCost }} ETH</p>
+            <p>{{ value.usdCost }}USD</p>
+          </td>
+          <td>
+            <p>{{ value.btcCost * basePrices.btc }} BTC</p>
+            <p>{{ value.ethCost * basePrices.eth }} ETH</p>
+            <p>{{ value.usdCost }}USD</p>
+          </td>
+          <td><button>Open Chart</button></td>
         </tr>
       </template>
     </table>

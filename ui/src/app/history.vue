@@ -4,7 +4,7 @@
 
 <template>
   <div>
-    <table border="1">
+    <table border="1" width="100%">
       <tr>
         <td>Time</td>
         <td>Trade Pair</td>
@@ -18,7 +18,7 @@
         <td>{{ r.timestamp | moment }}</td>
         <td>{{ r.toCoin }}/{{ r.baseCoin }}</td>
         <td>{{ r.baseCoinAmount / r.toAmount}} {{ r.baseCoin }}</td>
-        <td>{{ r.toAmount }}</td>
+        <td>{{ r.buySell < 0 ? "-" : " " }}{{ r.toAmount }}</td>
         <td>{{ r.baseCoinAmount }} {{ r.baseCoin }}</td>
         <td>{{ r.baseCoinCost.usd }}</td>
         <td>
