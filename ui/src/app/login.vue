@@ -19,6 +19,13 @@
 <template>
   <div class="login">
     <p>Sign in using:</p>
+    <p>
+      Email:
+      <input type="text" v-model="email"> Password:
+      <input type="password" v-model="password">
+      <button @click="login">Login</button>
+    </p>
+    <hr>
     <div class="fb-login" @click="fbLogin">
       <i class="fa fa-facebook-official"></i> Facebook</div>
   </div>
@@ -56,16 +63,29 @@
 
       async login() {
         try {
-          let u = await firebase.auth().signInWithEmailAndPassword(this.username, this.password)
+          let u = await firebase.auth().signInWithEmailAndPassword(this.email, this.password);
+          let redirect = this.$route.query.redirect || "/"
+          this.$router.push({
+            path: redirect
+          })
         } catch (err) {
-          console.log(err)
+          if (err.code === 'auth/user-not-found') {
+            try {
+              await firebase.auth().createUserWithEmailAndPassword(this.email, this.password);
+              this.login()
+            } catch (err) {
+              console.log(err)
+            }
+          } else {
+            console.log(err)
+          }
         }
       }
     },
 
     data() {
       return {
-        username: "",
+        email: "",
         password: "",
       }
     }
