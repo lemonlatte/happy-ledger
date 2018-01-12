@@ -23,9 +23,9 @@ var Login = require('./app/login.vue')
 
 var routes = [
   {path: '/ledger', component: Ledger, props: true},
-  {path: '/ledger/:ledgerName', component: History, props: true},
-  {path: '/ledger/:ledgerName/history', component: History, props: true},
-  {path: '/ledger/:ledgerName/summary', component: Summary, props: true},
+  {path: '/ledger/:ledgerName', redirect: { name: 'history' }, props: true},
+  {path: '/ledger/:ledgerName/history', name: 'history', component: History, props: true},
+  {path: '/ledger/:ledgerName/summary', name: 'summary', component: Summary, props: true},
   {path: '/login', component: Login},
   {path: '/', component: Ledger},
   {path: '*', component: Ledger}

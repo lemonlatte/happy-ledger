@@ -5,6 +5,10 @@
       <div style="float: right;">{{ user.email }} <a href="#" v-if="!!user" @click="logout">Logout</a> </div>
     </template>
     <div style="clear: both"></div>
+    <div v-if="currentPage">
+      <router-link to="/" tag="a">Home</router-link> > Ledger > {{ currentPage }}
+    </div>
+    <hr>
   </div>
 </template>
 
@@ -16,11 +20,19 @@
       user: Object
     },
 
+    computed: {
+      currentPage () {
+        let ledgerName = this.$route.params.ledgerName
+        return (ledgerName) ? ledgerName : ''
+      }
+    },
+
     methods: {
       async logout() {
         await firebase.auth().signOut()
       }
     },
+
     data() {
       return {}
     }

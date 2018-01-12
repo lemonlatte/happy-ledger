@@ -4,6 +4,7 @@
 
 <template>
   <div>
+    <LedgerLinkBar :ledgerName="ledgerName"></LedgerLinkBar>
     <table border="1" width="100%" v-if="basePrices.btc">
       <tr>
         <td>幣別</td>
@@ -41,7 +42,14 @@
 
   const db = firebase.firestore();
 
+  import LedgerLinkBar from '../components/ledger-link-bar.vue'
+
   export default {
+
+    components: {
+      LedgerLinkBar: LedgerLinkBar
+    },
+
     props: {
       ledgerName: String,
       uid: String,

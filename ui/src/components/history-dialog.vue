@@ -167,7 +167,6 @@
     },
 
     mounted() {
-      console.log("dadada")
       this.timerTask = setInterval(() => {
         this.now = Date.now()
       }, 2000)

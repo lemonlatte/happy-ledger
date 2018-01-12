@@ -4,6 +4,7 @@
 
 <template>
   <div>
+    <LedgerLinkBar :ledgerName="ledgerName"></LedgerLinkBar>
     <button @click="() => {this.action = 'new'}">新增</button>
     <table border="1" width="100%">
       <tr>
@@ -41,6 +42,7 @@
   import axios from 'axios'
 
   import HistoryDialog from '../components/history-dialog.vue'
+  import LedgerLinkBar from '../components/ledger-link-bar.vue'
 
   const db = firebase.firestore();
 
@@ -53,7 +55,8 @@
     },
 
     components: {
-      HistoryDialog: HistoryDialog
+      HistoryDialog: HistoryDialog,
+      LedgerLinkBar: LedgerLinkBar
     },
 
     destroyed() {},
