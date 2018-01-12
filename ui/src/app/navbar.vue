@@ -1,10 +1,10 @@
 <template>
   <div>
-    <router-link to="/history" tag="a">History</router-link>
-    <router-link to="/summary" tag="a">Summary</router-link>
+    <div style="float: left;">Happy Ledger</div>
     <template v-if="!!user">
       <div style="float: right;">{{ user.email }} <a href="#" v-if="!!user" @click="logout">Logout</a> </div>
     </template>
+    <div style="clear: both"></div>
   </div>
 </template>
 

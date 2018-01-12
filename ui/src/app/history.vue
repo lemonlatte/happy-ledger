@@ -18,17 +18,27 @@
         <td>{{ r.timestamp | moment }}</td>
         <td>{{ r.toCoin }}/{{ r.baseCoin }}</td>
         <td>{{ r.baseCoinAmount / r.toAmount}} {{ r.baseCoin }}</td>
-        <td>{{ r.buySell < 0 ? "-" : " " }}{{ r.toAmount }}</td>
-        <td>{{ r.baseCoinAmount }} {{ r.baseCoin }}</td>
-        <td>{{ r.baseCoinCost.usd }}</td>
-        <td>
-          <button @click="() => {remove(r.id)}">Edit</button>
-          <button @click="() => {remove(r.id)}">Delete</button>
-        </td>
+        <td>{{ r.buySell
+          < 0 ? "-" : " " }}{{ r.toAmount }}</td>
+            <td>{{ r.baseCoinAmount }} {{ r.baseCoin }}</td>
+            <td>{{ r.baseCoinCost.usd }}</td>
+            <td>
+              <button @click="() => {remove(r.id)}">Edit</button>
+              <button @click="() => {remove(r.id)}">Delete</button>
+            </td>
       </tr>
     </table>
 
     <form>
+      <p>
+        Date
+        <input type="text" :placeholder="currentDate">
+      </p>
+      <p>
+        Time
+        <input type="text" :placeholder="currentTime">
+
+      </p>
       <p>Base Coin:
         <select v-model="baseCoin">
           <option value="usd">USD</option>
@@ -54,6 +64,14 @@
           <option value="xrp">XRP</option>
         </select>
         <input type="number" v-model.number="toAmount">
+        <p>
+          Trading Value
+          <input type="number" v-model.number="baseCoinCost['eth']">
+        </p>
+        <p>
+          Trading Price
+          <input type="number" v-model.number="baseCoinCost['usd']">
+        </p>
       </p>
     </form>
     <button @click="buy">買</button>
@@ -72,6 +90,7 @@
   export default {
 
     props: {
+      ledgerName: String,
       uid: String,
       basePrices: Object
     },
@@ -86,26 +105,27 @@
           return 1
         }
         return this.baseCoinPrice || this.basePrices[this.baseCoin]
-      }
-    },
-
-    methods: {
-      buy() {
-        this.newRecord(1)
+      },
+      currentDate() {
+        return moment(this.now).format('YYYY-MM-DD')
+      },
+      currentTime() {
+        return moment(this.now).format('hh:mm:ss')
       },
 
-      sell() {
-        this.newRecord(-1)
-      },
+      baseCoinCost() {
+        let baseCoinCost = {
+          usd: 0,
+          eth: 0,
+          btc: 0,
+        }
 
-      async newRecord(buySell) {
         if (!this.baseCoinAmount || !this.toAmount) {
-          alert("invalid amount")
-          return
+          // alert("invalid amount")
+          return baseCoinCost
         }
 
         // calculate the base coin costs
-        let baseCoinCost = {}
         Array("usd", "eth", "btc").forEach((coin) => {
           let cost;
           if (this.baseCoin === coin) {
@@ -119,13 +139,26 @@
           }
           baseCoinCost[coin] = cost
         })
+        return baseCoinCost
+      }
+    },
 
+    methods: {
+      buy() {
+        this.newRecord(1)
+      },
+
+      sell() {
+        this.newRecord(-1)
+      },
+
+      async newRecord(buySell) {
         let r = {
           buySell: buySell,
           timestamp: Date.now(),
           baseCoin: this.baseCoin,
           baseCoinAmount: this.baseCoinAmount,
-          baseCoinCost: baseCoinCost,
+          baseCoinCost: this.baseCoinCost,
           baseCoinPrice: this.currentBaseCoinPrice,
           unitPrice: this.baseCoinAmount / this.toAmount,
 
@@ -134,7 +167,8 @@
         }
 
         try {
-          let ref = await db.collection("ledger").doc(this.uid).collection("history").add(r)
+          let ref = await db.collection("users").doc(this.uid).collection('ledgers').doc(this.ledgerName)
+            .collection("history").add(r)
         } catch (error) {
           console.error("Error adding document: ", error);
         }
@@ -145,22 +179,24 @@
 
       async remove(id) {
         try {
-          await db.collection("ledger").doc(this.uid).collection("history").doc(id).delete()
+          await db.collection("users").doc(this.uid).collection('ledgers').doc(this.ledgerName)
+            .collection("history").doc(id).delete()
         } catch (error) {
           console.log(error)
         }
       },
 
-      loadData(uid){
-        db.collection("ledger").doc(uid).collection("history").orderBy("timestamp", "desc")
-            .onSnapshot(snapshot => {
-              let records = snapshot.docs.map(doc => {
-                let d = doc.data()
-                d.id = doc.id
-                return d
-              })
-              this.records = records
-            });
+      loadData(uid) {
+        db.collection("users").doc(uid).collection('ledgers').doc(this.ledgerName)
+          .collection("history").orderBy("timestamp", "desc")
+          .onSnapshot(snapshot => {
+            let records = snapshot.docs.map(doc => {
+              let d = doc.data()
+              d.id = doc.id
+              return d
+            })
+            this.records = records
+          });
       }
     },
 
@@ -182,6 +218,9 @@
       if (this.uid) {
         this.loadData(this.uid)
       }
+      setInterval(() => {
+        this.now = Date.now()
+      }, 1000)
     },
 
     data() {
@@ -193,6 +232,7 @@
         baseCoinPrice: null,
         toAmount: 0,
 
+        now: Date.now(),
         records: []
       }
     }

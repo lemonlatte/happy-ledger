@@ -53,7 +53,7 @@
 
     data() {
       return {
-        uid: null,
+        uid: "",
         user: null,
         basePrices: {},
         nodeInfo: {}

@@ -16,15 +16,19 @@ var config = {
 firebase.initializeApp(config);
 
 var Main = require('./app/main.vue')
+var Ledger = require('./app/ledger.vue')
 var History = require('./app/history.vue')
 var Summary = require('./app/summary.vue')
 var Login = require('./app/login.vue')
 
 var routes = [
-  {path: '/summary', component: Summary, props: true},
+  {path: '/ledger', component: Ledger, props: true},
+  {path: '/ledger/:ledgerName', component: History, props: true},
+  {path: '/ledger/:ledgerName/history', component: History, props: true},
+  {path: '/ledger/:ledgerName/summary', component: Summary, props: true},
   {path: '/login', component: Login},
-  {path: '/', component: History},
-  {path: '*', component: History}
+  {path: '/', component: Ledger},
+  {path: '*', component: Ledger}
 ]
 
 var router = new VueRouter({routes})

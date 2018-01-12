@@ -12,29 +12,29 @@
         <td>現今估值</td>
         <td></td>
       </tr>
-      <template v-for="(value, key) in balance">
-        <tr>
-          <td>{{ key }}</td>
-          <td>{{ value.amount }}</td>
-          <td>
-            <p>{{ value.btcCost }} BTC</p>
-            <p>{{ value.ethCost }} ETH</p>
-            <p>{{ value.usdCost }}USD</p>
-          </td>
-          <td>
-            <p>{{ value.btcCost * basePrices.btc }} BTC</p>
-            <p>{{ value.ethCost * basePrices.eth }} ETH</p>
-            <p>{{ value.usdCost }}USD</p>
-          </td>
-          <td><button>Open Chart</button></td>
-        </tr>
-      </template>
+      <tr v-for="(value, key) in balance" :key="key">
+        <td>{{ key }}</td>
+        <td>{{ value.amount }}</td>
+        <td @click="() => {toggleDetailPrice(key)}">
+          <p>{{ value.usdCost }}USD</p>
+          <p v-if="collapseFlag[key]">{{ value.btcCost }}BTC</p>
+          <p v-if="collapseFlag[key]">{{ value.ethCost }}ETH</p>
+        </td>
+        <td>
+          <p>{{ value.usdCost }}USD</p>
+          <p v-if="collapseFlag[key]">{{ value.btcCost * basePrices.btc }}BTC</p>
+          <p v-if="collapseFlag[key]">{{ value.ethCost * basePrices.eth }}ETH</p>
+        </td>
+        <td>
+          <button>Open Chart</button>
+        </td>
+      </tr>
     </table>
-
   </div>
 </template>
 
 <script>
+  import Vue from 'vue'
   import firebase from 'firebase'
   require("firebase/firestore")
   import axios from 'axios'
@@ -43,6 +43,7 @@
 
   export default {
     props: {
+      ledgerName: String,
       uid: String,
       basePrices: Object
     },
@@ -84,11 +85,15 @@
     },
 
     methods: {
+      toggleDetailPrice(key) {
+        Vue.set(this.collapseFlag, key, !this.collapseFlag[key])
+      },
       currentBasePrice() {
         return this.basePrices || {}
       },
       loadData(uid) {
-        db.collection("ledger").doc(uid).collection("history").orderBy("timestamp", "desc")
+        db.collection("users").doc(uid).collection('ledgers').doc(this.ledgerName)
+          .collection("history").orderBy("timestamp", "desc")
           .onSnapshot(snapshot => {
             let records = snapshot.docs.map(doc => {
               let d = doc.data()
@@ -115,7 +120,8 @@
     data() {
       return {
         lastBalance: {},
-        records: []
+        records: [],
+        collapseFlag: {}
       }
     }
   }
