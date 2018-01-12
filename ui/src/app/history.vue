@@ -4,6 +4,7 @@
 
 <template>
   <div>
+    <button @click="() => {this.action = 'new'}">新增</button>
     <table border="1" width="100%">
       <tr>
         <td>Time</td>
@@ -23,59 +24,13 @@
             <td>{{ r.baseCoinAmount }} {{ r.baseCoin }}</td>
             <td>{{ r.baseCoinCost.usd }}</td>
             <td>
-              <button @click="() => {remove(r.id)}">Edit</button>
-              <button @click="() => {remove(r.id)}">Delete</button>
+              <button @click="() => {editRecord(r.id)}">Edit</button>
+              <button @click="() => {removeRecord(r.id)}">Delete</button>
             </td>
       </tr>
     </table>
 
-    <form>
-      <p>
-        Date
-        <input type="text" :placeholder="currentDate">
-      </p>
-      <p>
-        Time
-        <input type="text" :placeholder="currentTime">
-
-      </p>
-      <p>Base Coin:
-        <select v-model="baseCoin">
-          <option value="usd">USD</option>
-          <option value="btc">BTC</option>
-          <option value="eth">ETH</option>
-        </select>
-        <input type="number" v-model.number="baseCoinAmount">
-      </p>
-      <p v-if="baseCoin!='usd'">Current Price:
-        <input type="number" :placeholder="currentBaseCoinPrice" v-model.number="baseCoinPrice">
-      </p>
-      <p>To:
-        <select v-model="toCoin">
-          <option value="">-</option>
-          <option value="btc" v-if="baseCoin!=='btc'">BTC</option>
-          <option value="eth" v-if="baseCoin!=='eth'">ETH</option>
-          <option value="usd" v-if="baseCoin!=='usd'">USD</option>
-          <option value="bcc">BCC</option>
-          <option value="ltc">LTC</option>
-          <option value="neo">NEO</option>
-          <option value="omg">OMG</option>
-          <option value="iota">IOTA</option>
-          <option value="xrp">XRP</option>
-        </select>
-        <input type="number" v-model.number="toAmount">
-        <p>
-          Trading Value
-          <input type="number" v-model.number="baseCoinCost['eth']">
-        </p>
-        <p>
-          Trading Price
-          <input type="number" v-model.number="baseCoinCost['usd']">
-        </p>
-      </p>
-    </form>
-    <button @click="buy">買</button>
-    <button @click="sell">賣</button>
+    <HistoryDialog :action="action" :basePrices="basePrices" v-on:close="closeDialog" v-on:new="onNewRecord" v-on:edit="onEditRecord"></HistoryDialog>
   </div>
 </template>
 
@@ -84,6 +39,8 @@
   require("firebase/firestore")
   import moment from 'moment'
   import axios from 'axios'
+
+  import HistoryDialog from '../components/history-dialog.vue'
 
   const db = firebase.firestore();
 
@@ -95,89 +52,49 @@
       basePrices: Object
     },
 
-    destroyed() {
-      clearInterval(this.priceTask)
+    components: {
+      HistoryDialog: HistoryDialog
     },
 
-    computed: {
-      currentBaseCoinPrice() {
-        if (this.baseCoin === 'usd') {
-          return 1
-        }
-        return this.baseCoinPrice || this.basePrices[this.baseCoin]
-      },
-      currentDate() {
-        return moment(this.now).format('YYYY-MM-DD')
-      },
-      currentTime() {
-        return moment(this.now).format('hh:mm:ss')
-      },
-
-      baseCoinCost() {
-        let baseCoinCost = {
-          usd: 0,
-          eth: 0,
-          btc: 0,
-        }
-
-        if (!this.baseCoinAmount || !this.toAmount) {
-          // alert("invalid amount")
-          return baseCoinCost
-        }
-
-        // calculate the base coin costs
-        Array("usd", "eth", "btc").forEach((coin) => {
-          let cost;
-          if (this.baseCoin === coin) {
-            cost = this.baseCoinAmount
-          } else {
-            if (coin === 'usd') {
-              cost = this.baseCoinAmount * this.basePrices[this.baseCoin]
-            } else {
-              cost = this.baseCoinAmount * this.basePrices[this.baseCoin] / this.basePrices[coin]
-            }
-          }
-          baseCoinCost[coin] = cost
-        })
-        return baseCoinCost
-      }
-    },
+    destroyed() {},
 
     methods: {
-      buy() {
-        this.newRecord(1)
+
+      closeDialog() {
+        this.action = ""
       },
 
-      sell() {
-        this.newRecord(-1)
-      },
-
-      async newRecord(buySell) {
-        let r = {
-          buySell: buySell,
-          timestamp: Date.now(),
-          baseCoin: this.baseCoin,
-          baseCoinAmount: this.baseCoinAmount,
-          baseCoinCost: this.baseCoinCost,
-          baseCoinPrice: this.currentBaseCoinPrice,
-          unitPrice: this.baseCoinAmount / this.toAmount,
-
-          toCoin: this.toCoin,
-          toAmount: this.toAmount,
-        }
-
+      async onNewRecord(r) {
+        console.log(r)
         try {
           let ref = await db.collection("users").doc(this.uid).collection('ledgers').doc(this.ledgerName)
             .collection("history").add(r)
         } catch (error) {
           console.error("Error adding document: ", error);
         }
-
-        // clean manual base coin price
-        this.baseCoinPrice = null;
+        this.closeDialog()
       },
 
-      async remove(id) {
+      async editRecord(id) {
+        this.action = "edit"
+      },
+
+      async onEditRecord(r) {
+        console.log("edit record")
+        try {
+          let ref = await db.collection("users").doc(this.uid).collection('ledgers').doc(this.ledgerName)
+            .collection("history").update(r)
+        } catch (error) {
+          console.error("Error adding document: ", error);
+        }
+        this.closeDialog()
+      },
+
+      async removeRecord(id) {
+        let yes = confirm("really")
+        if (!yes) {
+          return
+        }
         try {
           await db.collection("users").doc(this.uid).collection('ledgers').doc(this.ledgerName)
             .collection("history").doc(id).delete()
@@ -218,21 +135,12 @@
       if (this.uid) {
         this.loadData(this.uid)
       }
-      setInterval(() => {
-        this.now = Date.now()
-      }, 1000)
+
     },
 
     data() {
       return {
-        priceTask: null,
-        baseCoin: "usd",
-        toCoin: "",
-        baseCoinAmount: 0,
-        baseCoinPrice: null,
-        toAmount: 0,
-
-        now: Date.now(),
+        action: "",
         records: []
       }
     }
