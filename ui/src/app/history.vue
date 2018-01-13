@@ -4,7 +4,7 @@
 
 <template>
   <div>
-    <LedgerLinkBar :ledgerName="ledgerName"></LedgerLinkBar>
+    <LedgerLinkBar :ledgerId="ledgerId" :ledgerName="ledgerName"></LedgerLinkBar>
     <button @click="() => {this.action = 'new'}">新增</button>
     <table border="1" width="100%">
       <tr>
@@ -49,7 +49,7 @@
   export default {
 
     props: {
-      ledgerName: String,
+      ledgerId: String,
       uid: String,
       basePrices: Object
     },
@@ -70,7 +70,7 @@
       async onNewRecord(r) {
         console.log(r)
         try {
-          let ref = await db.collection("users").doc(this.uid).collection('ledgers').doc(this.ledgerName)
+          let ref = await db.collection("users").doc(this.uid).collection('ledgers').doc(this.ledgerId)
             .collection("history").add(r)
         } catch (error) {
           console.error("Error adding document: ", error);
@@ -85,7 +85,7 @@
       async onEditRecord(r) {
         console.log("edit record")
         try {
-          let ref = await db.collection("users").doc(this.uid).collection('ledgers').doc(this.ledgerName)
+          let ref = await db.collection("users").doc(this.uid).collection('ledgers').doc(this.ledgerId)
             .collection("history").update(r)
         } catch (error) {
           console.error("Error adding document: ", error);
@@ -99,7 +99,7 @@
           return
         }
         try {
-          await db.collection("users").doc(this.uid).collection('ledgers').doc(this.ledgerName)
+          await db.collection("users").doc(this.uid).collection('ledgers').doc(this.ledgerId)
             .collection("history").doc(id).delete()
         } catch (error) {
           console.log(error)
@@ -107,7 +107,12 @@
       },
 
       loadData(uid) {
-        db.collection("users").doc(uid).collection('ledgers').doc(this.ledgerName)
+        this.unsubscribe1 = db.collection("users").doc(uid).collection('ledgers').doc(this.ledgerId)
+          .onSnapshot(snapshot => {
+            this.ledgerName = snapshot.data().name
+          })
+
+        this.unsubscribe2 = db.collection("users").doc(uid).collection('ledgers').doc(this.ledgerId)
           .collection("history").orderBy("timestamp", "desc")
           .onSnapshot(snapshot => {
             let records = snapshot.docs.map(doc => {
@@ -138,7 +143,11 @@
       if (this.uid) {
         this.loadData(this.uid)
       }
+    },
 
+    destroyed() {
+      this.unsubscribe1();
+      this.unsubscribe2();
     },
 
     data() {

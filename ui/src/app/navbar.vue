@@ -2,12 +2,11 @@
   <div>
     <div style="float: left;">Happy Ledger</div>
     <template v-if="!!user">
-      <div style="float: right;">{{ user.email }} <a href="#" v-if="!!user" @click="logout">Logout</a> </div>
+      <div style="float: right;">{{ user.email }}
+        <a href="#" v-if="!!user" @click="logout">Logout</a>
+      </div>
     </template>
     <div style="clear: both"></div>
-    <div v-if="currentPage">
-      <router-link to="/" tag="a">Home</router-link> > Ledger > {{ currentPage }}
-    </div>
     <hr>
   </div>
 </template>
@@ -16,15 +15,7 @@
   import firebase from 'firebase'
   export default {
     props: {
-      uid: String,
       user: Object
-    },
-
-    computed: {
-      currentPage () {
-        let ledgerName = this.$route.params.ledgerName
-        return (ledgerName) ? ledgerName : ''
-      }
     },
 
     methods: {

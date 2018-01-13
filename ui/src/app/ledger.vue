@@ -18,9 +18,9 @@
     <div>Ledgers</div>
     <div class="ledger-box" v-for="l in ledgers" v-bind:key="l.id">
       <div class="inner">
-        <router-link :to="'/ledger/' + l.id" tag="a">{{ l.id }}</router-link>
+        <router-link :to="'/ledger/' + l.id" tag="a">{{ l.name }}</router-link>
         <hr>
-        <button type="button" @click="editLedger">Edit</button>
+        <button type="button" @click="() => { editLedger(l) }">Edit</button>
       </div>
     </div>
     <hr>
@@ -29,6 +29,8 @@
       <input type="text" v-model="newLedgerName">
       <button type="button" @click="addLedger">Add</button>
     </div>
+    <LedgerEditDialog :editingLedger="editingLedger"
+      v-on:edit="onEditLedger" v-on:close="() => { this.editingLedger = {} }"></LedgerEditDialog>
   </div>
 </template>
 
@@ -40,10 +42,16 @@
 
   const db = firebase.firestore();
 
+  import LedgerEditDialog from '../components/dialogs/ledger-edit.vue'
+
   export default {
 
     props: {
       uid: String
+    },
+
+    components: {
+      LedgerEditDialog: LedgerEditDialog
     },
 
     methods: {
@@ -51,13 +59,21 @@
         if (!this.newLedgerName) {
           return;
         }
-        db.collection("users").doc(this.uid).collection('ledgers').doc(this.newLedgerName).set({
+        db.collection("users").doc(this.uid).collection('ledgers').add({
+          name: this.newLedgerName,
           createdAt: new Date()
         })
       },
 
-      editLedger() {
-        console.log("edit")
+      editLedger(ledger) {
+        this.editingLedger = ledger
+      },
+
+      onEditLedger(newName){
+        db.collection("users").doc(this.uid).collection('ledgers').doc(this.editingLedger.id).update({
+          name: newName
+        })
+        this.editingLedger = {}
       },
 
       getLedgers() {
@@ -91,7 +107,7 @@
     data() {
       return {
         ledgers: null,
-        newLedgerName: ""
+        editingLedger: {}
       }
     }
   }

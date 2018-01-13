@@ -4,7 +4,7 @@
 
 <template>
   <div>
-    <LedgerLinkBar :ledgerName="ledgerName"></LedgerLinkBar>
+    <LedgerLinkBar :ledgerId="ledgerId" :ledgerName="ledgerName"></LedgerLinkBar>
     <table border="1" width="100%" v-if="basePrices.btc">
       <tr>
         <td>幣別</td>
@@ -51,7 +51,7 @@
     },
 
     props: {
-      ledgerName: String,
+      ledgerId: String,
       uid: String,
       basePrices: Object
     },
@@ -99,8 +99,14 @@
       currentBasePrice() {
         return this.basePrices || {}
       },
-      loadData(uid) {
-        db.collection("users").doc(uid).collection('ledgers').doc(this.ledgerName)
+      async loadData(uid) {
+
+        this.unsubscribe1 = db.collection("users").doc(uid).collection('ledgers').doc(this.ledgerId)
+          .onSnapshot(snapshot => {
+            this.ledgerName = snapshot.data().name
+          })
+
+        this.unsubscribe2 = db.collection("users").doc(uid).collection('ledgers').doc(this.ledgerId)
           .collection("history").orderBy("timestamp", "desc")
           .onSnapshot(snapshot => {
             let records = snapshot.docs.map(doc => {
@@ -125,6 +131,12 @@
         this.loadData(this.uid)
       }
     },
+
+    destroyed() {
+      this.unsubscribe1();
+      this.unsubscribe2();
+    },
+
     data() {
       return {
         lastBalance: {},

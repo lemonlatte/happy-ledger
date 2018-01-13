@@ -1,21 +1,24 @@
 <style lang="scss" scoped>
-.active {
-  border: solid 1px red;
-}
+  .active {
+    border: solid 1px red;
+  }
 </style>
 
 <template>
   <div>
-    <router-link active-class="active" :to="{name: 'history', params: { ledgerName: ledgerName }}" tag="a">History</router-link>
-    <router-link active-class="active" :to="{name: 'summary', params: { ledgerName: ledgerName }}" tag="a">Summary</router-link>
+    <div>
+      <router-link to="/" tag="a">Home</router-link> > Ledger > {{ ledgerName }}
+    </div>
+    <router-link active-class="active" :to="{name: 'history', params: { ledgerId: ledgerId }}" tag="a">History</router-link>
+    <router-link active-class="active" :to="{name: 'summary', params: { ledgerId: ledgerId }}" tag="a">Summary</router-link>
   </div>
 </template>
 
 <script>
-export default {
-  props: {
-    ledgerName: String
+  export default {
+    props:{
+      ledgerId: String,
+      ledgerName: String
+    }
   }
-}
 </script>
-
