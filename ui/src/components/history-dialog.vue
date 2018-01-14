@@ -89,6 +89,7 @@
 
     props: {
       action: "",
+      inputData: {},
       basePrices: {}
     },
 
@@ -150,7 +151,7 @@
           toCoin: this.toCoin,
           toAmount: this.toAmount,
         }
-        this.$emit(this.action, r)
+        this.$emit(this.action, this.inputData.id, r)
         this.baseCoinPrice = null;
       },
       close() {
@@ -174,6 +175,17 @@
 
     destroyed() {
       clearInterval(this.timerTask)
+    },
+
+    watch: {
+      inputData(oldVaule, newValue) {
+        this.buySell = this.inputData.buySell || 1
+        this.baseCoin = this.inputData.baseCoin || "usd"
+        this.baseCoinAmount = this.inputData.baseCoinAmount || 0
+        this.baseCoinPrice = this.inputData.baseCoinPrice || null
+        this.toCoin = this.inputData.toCoin || ""
+        this.toAmount = this.inputData.toAmount || 0
+      }
     },
 
     data() {

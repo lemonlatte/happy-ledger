@@ -5,7 +5,7 @@
 <template>
   <div>
     <LedgerLinkBar :ledgerId="ledgerId" :ledgerName="ledgerName"></LedgerLinkBar>
-    <button @click="() => {this.action = 'new'}">新增</button>
+    <button @click="() => {this.action = 'new', this.inputData = {}}">新增</button>
     <table border="1" width="100%">
       <tr>
         <td>Time</td>
@@ -25,13 +25,14 @@
             <td>{{ r.baseCoinAmount }} {{ r.baseCoin }}</td>
             <td>{{ r.baseCoinCost.usd }}</td>
             <td>
-              <button @click="() => {editRecord(r.id)}">Edit</button>
+              <button @click="() => {editRecord(r)}">Edit</button>
               <button @click="() => {removeRecord(r.id)}">Delete</button>
             </td>
       </tr>
     </table>
 
-    <HistoryDialog :action="action" :basePrices="basePrices" v-on:close="closeDialog" v-on:new="onNewRecord" v-on:edit="onEditRecord"></HistoryDialog>
+    <HistoryDialog :action="action" :inputData="inputData" :basePrices="basePrices" v-on:close="closeDialog" v-on:new="onNewRecord"
+      v-on:edit="onEditRecord"></HistoryDialog>
   </div>
 </template>
 
@@ -78,15 +79,16 @@
         this.closeDialog()
       },
 
-      async editRecord(id) {
+      async editRecord(r) {
         this.action = "edit"
+        this.inputData = r
       },
 
-      async onEditRecord(r) {
-        console.log("edit record")
+      async onEditRecord(id, r) {
+        console.log("edit record", id, r)
         try {
           let ref = await db.collection("users").doc(this.uid).collection('ledgers').doc(this.ledgerId)
-            .collection("history").update(r)
+            .collection("history").doc(id).update(r)
         } catch (error) {
           console.error("Error adding document: ", error);
         }
@@ -153,6 +155,7 @@
     data() {
       return {
         action: "",
+        inputData: {},
         records: []
       }
     }
