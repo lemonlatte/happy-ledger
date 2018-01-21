@@ -11,7 +11,7 @@ type Config struct {
 }
 
 func main() {
-	crawler := NewMarketCapCrawler()
+	crawler := NewCryptoCompareCrawler()
 	crawler.Run()
 
 	r := gin.New()
@@ -19,8 +19,9 @@ func main() {
 	v1 := r.Group("v1")
 	v1.GET("/price", func(c *gin.Context) {
 		c.JSON(200, map[string]float64{
-			"eth": crawler.ETH(),
-			"btc": crawler.BTC(),
+			"eth":  crawler.ETH(),
+			"btc":  crawler.BTC(),
+			"usdt": crawler.USDT(),
 		})
 	})
 

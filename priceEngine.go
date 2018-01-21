@@ -6,14 +6,18 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
 )
 
+const CRAWLER_TIMEOUT = 10 * time.Second
+
 type PriceCralwer interface {
 	ETH() float64
 	BTC() float64
+	USDT() float64
 	Run()
 }
 
@@ -120,6 +124,70 @@ func (e *MarketCapCrawler) Run() {
 				e.priceMap[priceInfo["symbol"]] = p
 			}
 			time.Sleep(5 * time.Second)
+		}
+	}()
+}
+
+type CryptoCompareCrawler struct {
+	sync.RWMutex
+	c        *http.Client
+	log      *logrus.Entry
+	priceMap map[string]map[string]float64
+}
+
+func NewCryptoCompareCrawler() *CryptoCompareCrawler {
+	return &CryptoCompareCrawler{
+		c: &http.Client{
+			Timeout:   5 * time.Second,
+			Transport: &http.Transport{},
+		},
+		log:      logrus.New().WithField("service", "engine"),
+		priceMap: map[string]map[string]float64{},
+	}
+}
+
+func (e *CryptoCompareCrawler) ETH() float64 {
+	e.RLock()
+	defer e.RUnlock()
+	return e.priceMap["ETH"]["USD"]
+}
+
+func (e *CryptoCompareCrawler) BTC() float64 {
+	e.RLock()
+	defer e.RUnlock()
+	return e.priceMap["BTC"]["USD"]
+}
+
+func (e *CryptoCompareCrawler) USDT() float64 {
+	e.RLock()
+	defer e.RUnlock()
+	return e.priceMap["USDT"]["USD"]
+}
+
+func (e *CryptoCompareCrawler) Run() {
+	go func() {
+		for {
+			resp, err := e.c.Get("https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC,ETH,USDT&tsyms=BTC,ETH,USDT,USD")
+			if err != nil {
+				e.log.Error("fail to get prices from cryptocompare. error:", err.Error())
+				time.Sleep(CRAWLER_TIMEOUT)
+				continue
+			}
+			var buf bytes.Buffer
+			prices := map[string]map[string]float64{}
+			_, _ = io.Copy(&buf, resp.Body)
+			resp.Body.Close()
+
+			d := json.NewDecoder(&buf)
+			e.log.Printf(buf.String())
+			err = d.Decode(&prices)
+			if err != nil {
+				e.log.Error("fail to parse prices body. error:", err.Error())
+			}
+			e.Lock()
+			e.priceMap = prices
+			e.Unlock()
+			time.Sleep(CRAWLER_TIMEOUT)
 		}
 	}()
 }
