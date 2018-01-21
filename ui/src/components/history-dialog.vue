@@ -33,12 +33,11 @@
         <form>
           <p>
             Date
-            <input type="text" :placeholder="currentDate">
+            <input type="date" v-model="date">
           </p>
           <p>
             Time
-            <input type="text" :placeholder="currentTime">
-
+            <input type="time" v-model="time">
           </p>
           <p>Base Coin:
             <select v-model="baseCoin">
@@ -84,6 +83,9 @@
 </template>
 <script>
   import moment from 'moment'
+  import firebase from 'firebase'
+  require("firebase/firestore")
+  const db = firebase.firestore();
 
   export default {
 
@@ -94,22 +96,22 @@
     },
 
     computed: {
-      currentDate() {
-        return moment(this.now).format('YYYY-MM-DD')
-      },
-      currentTime() {
-        return moment(this.now).format('hh:mm:ss')
-      },
       currentBaseCoinPrice() {
         if (this.baseCoin === 'usd') {
           return 1
         }
-        return this.baseCoinPrice || this.basePrices[this.baseCoin]
+
+        // currentBaseCoinPrice will search the following in order and return the first non-empty one:
+        // 1. baseCoinPrice
+        // 2. historyPrices
+        // 3. basePrices
+        return this.baseCoinPrice || this.historyPrices[this.baseCoin] || this.basePrices[this.baseCoin]
       },
 
       baseCoinCost() {
         let baseCoinCost = {
           usd: 0,
+          usdt: 0,
           eth: 0,
           btc: 0,
         }
@@ -119,16 +121,21 @@
           return baseCoinCost
         }
 
+        let basePrices = this.basePrices
+        if (this.historyPrices.eth) {
+          basePrices = this.historyPrices
+        }
+
         // calculate the base coin costs
-        Array("usd", "eth", "btc").forEach((coin) => {
+        Array("usd", "eth", "btc", "usdt").forEach((coin) => {
           let cost;
           if (this.baseCoin === coin) {
             cost = this.baseCoinAmount
           } else {
             if (coin === 'usd') {
-              cost = this.baseCoinAmount * this.basePrices[this.baseCoin]
+              cost = this.baseCoinAmount * basePrices[this.baseCoin]
             } else {
-              cost = this.baseCoinAmount * this.basePrices[this.baseCoin] / this.basePrices[coin]
+              cost = this.baseCoinAmount * basePrices[this.baseCoin] / basePrices[coin]
             }
           }
           baseCoinCost[coin] = cost
@@ -138,6 +145,36 @@
     },
 
     methods: {
+      async getHistoryPrice(d, t) {
+        let datetime = moment(d + " " + t)
+        // if datetime is invalid or within 5 mins, return {}
+        if (!datetime.isValid() || moment().diff(datetime) < 300000) {
+          return {}
+        }
+
+        let lastHistoryDate = moment(Math.floor(+datetime.toDate() / 300000) * 300000).utc()
+
+        try {
+          let ref = await db.collection("crypto-price")
+            .doc(lastHistoryDate.format("YYYYMMDD"))
+            .collection(lastHistoryDate.format("HH"))
+            .doc(lastHistoryDate.format("mm"))
+            .get()
+          let data = ref.data()
+          return {
+            btc: data.BTC.USD,
+            eth: data.ETH.USD,
+            usdt: data.USDT.USD,
+            usd: 1
+          }
+        } catch (error) {
+          console.log(error)
+          console.log("can not get price for time:",
+            lastHistoryDate.format("YYYYMMDD"), lastHistoryDate.format("HH"), lastHistoryDate.format("mm"))
+          return {}
+        }
+      },
+
       ok() {
         let r = {
           buySell: this.buySell,
@@ -167,36 +204,41 @@
       }
     },
 
-    mounted() {
-      this.timerTask = setInterval(() => {
-        this.now = Date.now()
-      }, 2000)
-    },
-
-    destroyed() {
-      clearInterval(this.timerTask)
-    },
-
     watch: {
-      inputData(oldVaule, newValue) {
+      inputData(newValue, oldVaule) {
+        let now = moment()
         this.buySell = this.inputData.buySell || 1
         this.baseCoin = this.inputData.baseCoin || "usd"
         this.baseCoinAmount = this.inputData.baseCoinAmount || 0
         this.baseCoinPrice = this.inputData.baseCoinPrice || null
         this.toCoin = this.inputData.toCoin || ""
         this.toAmount = this.inputData.toAmount || 0
+        this.date = now.format("YYYY-MM-DD")
+        this.time = now.format("HH:mm")
+      },
+
+      async date(newValue, oldVaule) {
+        this.historyPrices = await this.getHistoryPrice(newValue, this.time)
+      },
+
+      async time(newValue, oldVaule) {
+        this.historyPrices = await this.getHistoryPrice(this.date, newValue)
       }
     },
 
     data() {
+      let now = moment()
       return {
         timerTask: null,
-        now: Date.now(),
+        now: now,
+        date: now.format("YYYY-MM-DD"),
+        time: now.format("HH:mm"),
 
         buySell: 1,
         baseCoin: "usd",
         baseCoinAmount: 0,
         baseCoinPrice: null,
+        historyPrices: {},
         toCoin: "",
         toAmount: 0
       }
